@@ -1,0 +1,26 @@
+pairs:
+  det: Detlef Eckardt
+  oli: Oliver Schnell
+  apy: Arvid Prozesky
+  rom: Roman Preuß
+  pvk: Venkata Karthik Paruchuri
+  fm: Federico Mendez
+  cd: Carlos Diaz
+  jsc: Jonas Schmidt
+  mob: Mario Orozco Borrego
+  hl: Hong-Linh Ly
+email_addresses:
+  det: det@vw-dilab.com
+  oli: oliver@vw-dilab.com
+  apy: arvid@vw-dilab.com
+  rom: roman@vw-dilab.com
+  pvk: pv.karthik@vw-dilab.com
+  fm: federico@vw-dilab.com
+  cd: carlos@vw-dilab.com
+  jsc: jonas@vw-dilab.com
+  mob: mario@vw-dilab.com
+  hl: linh@vw-dilab.com
+email:
+  prefix: project-flashlight
+  domain: googlegroups.com
+  no_solo_prefix: false
