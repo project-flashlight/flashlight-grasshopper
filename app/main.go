@@ -1,19 +1,50 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"log"
-	"net/http"
+	"os"
+	"sync"
+
+	"github.com/julienschmidt/httprouter"
+	"github.com/vwdilab/flashlight-grasshopper/grasshopper"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "grasshopper service: %s!", r.URL.Path[1:])
+var appCtx context.Context
+var router *httprouter.Router
+var wg sync.WaitGroup
 
+func init() {
+	appCtx = context.Background()
+	wg = sync.WaitGroup{}
+	wg.Add(1)
 }
 
 func main() {
-	http.HandleFunc("/", handler)
 
-	fmt.Println("Server is running")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	server := grasshopper.NewServer()
+
+	p, ok := loadPort()
+	if !ok {
+		fmt.Println("Failed to start server: PORT not set in environment")
+		return
+	}
+
+	router = server.Start(":" + p)
+
+	fmt.Printf("Server started in port %s\n", p)
+
+	wg.Done()
+
+	for {
+		select {
+		case <-appCtx.Done():
+			return
+		}
+	}
+}
+
+func loadPort() (string, bool) {
+	p := os.Getenv("PORT")
+	return p, p != ""
 }

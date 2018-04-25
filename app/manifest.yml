@@ -1,0 +1,16 @@
+---
+memory: 512MB
+disk_quota: 128MB
+timeout: 100
+instances: 1
+buildpack: go_buildpack
+health-check-type: process
+applications:
+- name: flashlight-grasshopper
+  hosts: [flashlight-grasshopper-test]
+  env:
+    GOPACKAGENAME: main
+    REGION: eu-west-1
+    GOVERSION: go1.9
+    # CAAS_LOG_PREFIX: '$Id: 87f9352fc966ad2a3bedc3368aa63f43cb181992 $'
+    # CAAS_LOG_LEVEL: 'ERROR'
