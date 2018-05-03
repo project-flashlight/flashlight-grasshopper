@@ -1,0 +1,138 @@
+{
+	"info": {
+		"_postman_id": "0832b468-24e0-4a2b-9218-44022e071a20",
+		"name": "Gecko-API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Test login",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Basic {{apiKey}}"
+					}
+				],
+				"body": {},
+				"url": {
+					"raw": "https://api.geckoboard.com",
+					"protocol": "https",
+					"host": [
+						"api",
+						"geckoboard",
+						"com"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Dataset",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Basic {{apiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"fields\": {\n    \"app_name\": {\n      \"type\": \"string\",\n      \"name\": \"AppName\",\n      \"optional\": false\n    },\n    \"commit_id\": {\n      \"type\": \"string\",\n      \"name\": \"CommitID\",\n      \"optional\": false\n    },\n    \"date\": {\n      \"type\": \"datetime\",\n      \"name\": \"Date\",\n      \"optional\": false\n    },\n    \"stage\": {\n      \"type\": \"string\",\n      \"name\": \"Stage\",\n      \"optional\": false\n    },\n    \"status\": {\n      \"type\": \"string\",\n      \"name\": \"Status\"\n    }\n  },\n  \"unique_by\": [\"app_name\", \"stage\"]\n}"
+				},
+				"url": {
+					"raw": "https://api.geckoboard.com/datasets/flashlight.services",
+					"protocol": "https",
+					"host": [
+						"api",
+						"geckoboard",
+						"com"
+					],
+					"path": [
+						"datasets",
+						"flashlight.services"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add new data",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Basic {{apiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"data\": [\n    {\n      \"app_name\": \"App1\",\n      \"commit_id\": \"12312312asd\",\n      \"date\": \"2018-05-03T12:00:00Z\",\n      \"stage\": \"Sandbox\",\n      \"status\": \"up\"\n    }\n  ]\n}"
+				},
+				"url": {
+					"raw": "https://api.geckoboard.com/datasets/flashlight.services/data",
+					"protocol": "https",
+					"host": [
+						"api",
+						"geckoboard",
+						"com"
+					],
+					"path": [
+						"datasets",
+						"flashlight.services",
+						"data"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Dataset",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Basic {{apiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "https://api.geckoboard.com/datasets/flashlight.services",
+					"protocol": "https",
+					"host": [
+						"api",
+						"geckoboard",
+						"com"
+					],
+					"path": [
+						"datasets",
+						"flashlight.services"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
