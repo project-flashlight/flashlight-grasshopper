@@ -2,7 +2,6 @@ package grasshopper_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -23,8 +22,6 @@ type PublishResponse struct {
 
 func startGrasshopperServerMocked() *httptest.Server {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("Endpoint hit\n")
-		fmt.Printf("Endpoint hit2\n")
 		if !strings.Contains(r.URL.Path, "data") {
 			panic("Endpoint url not mocked: " + r.URL.Path)
 		}

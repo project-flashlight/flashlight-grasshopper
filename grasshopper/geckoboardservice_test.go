@@ -36,7 +36,7 @@ func startGeckoboardServerMocked(callback func(bs string)) *httptest.Server {
 	return srv
 }
 
-func Test_Wululu(t *testing.T) {
+func Test_shouldSendDataSetToGeckoBoard(t *testing.T) {
 	// given
 	actualBody := ""
 	geckoboardMockServer := startGeckoboardServerMocked(func(bodyString string) {
@@ -51,19 +51,23 @@ func Test_Wululu(t *testing.T) {
 		CommitID: "asdasdasdasdas",
 		Date:     "2018-03-01",
 		Stage:    "Production",
+		Status:   "up",
 	}
 
-	expectedRequestBody := `{
-		"data": [
-		  {
-			"app_name": "App1",
-			"commit_id": "12312312asd",
-			"date": "2018-05-03T12:00:00Z",
-			"stage": "Sandbox",
-			"status": "up"
-		  }
+	expectedRequestBody := fmt.Sprintf(`{
+		"data":[
+			{
+				"app_name":"%v",
+				"commit_id":"%v",
+				"date":"%v",
+				"stage":"%v",
+				"status":"%v"
+			}
 		]
-	  }`
+	}`, appStatus.AppName, appStatus.CommitID, appStatus.Date, appStatus.Stage, appStatus.Status)
+
+	expectedRequestBody = strings.Replace(expectedRequestBody, "\n", "", -1)
+	expectedRequestBody = strings.Replace(expectedRequestBody, "\t", "", -1)
 
 	// when
 	err := geckoboardService.PublishStatus(appStatus)

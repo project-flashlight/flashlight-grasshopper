@@ -16,6 +16,11 @@ type AppStatus struct {
 	CommitID string `json:"commit_id"`
 	Date     string `json:"date"`
 	Stage    string `json:"stage"`
+	Status   string `json:"status"`
+}
+
+type DataSet struct {
+	Data []AppStatus `json:"data"`
 }
 
 type DefGeckoboardService struct{}
@@ -29,7 +34,8 @@ func (me *DefGeckoboardService) PublishStatus(appStatus AppStatus) error {
 	// add variable https://api.geckoboard.com/datasets/flashlight.services
 	endpoint := url + "/data"
 
-	b, _ := json.Marshal(appStatus)
+	data := DataSet{[]AppStatus{appStatus}}
+	b, _ := json.Marshal(data)
 	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBuffer(b))
 
 	if err != nil {
