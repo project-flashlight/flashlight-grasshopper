@@ -1,6 +1,7 @@
 package grasshopper_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -25,6 +26,7 @@ func startGeckoboardServerMocked(callback func(bs string)) *httptest.Server {
 
 		if err != nil {
 			panic("There was an error parsing the request: ")
+
 		}
 
 		bodyString := string(bodyBytes)
@@ -54,25 +56,15 @@ func Test_shouldSendDataSetToGeckoBoard(t *testing.T) {
 		Status:   "up",
 	}
 
-	expectedRequestBody := fmt.Sprintf(`{
-		"data":[
-			{
-				"app_name":"%v",
-				"commit_id":"%v",
-				"date":"%v",
-				"stage":"%v",
-				"status":"%v"
-			}
-		]
-	}`, appStatus.AppName, appStatus.CommitID, appStatus.Date, appStatus.Stage, appStatus.Status)
-
-	expectedRequestBody = strings.Replace(expectedRequestBody, "\n", "", -1)
-	expectedRequestBody = strings.Replace(expectedRequestBody, "\t", "", -1)
+	dataSet := grasshopper.DataSet{[]grasshopper.AppStatus{appStatus}}
+	b, _ := json.Marshal(dataSet)
+	expectedRequestBody := string(b)
 
 	// when
-	err := geckoboardService.PublishStatus(appStatus)
+	resp, err := geckoboardService.PublishStatus(appStatus)
 
 	// then
+	assert.Equal(t, resp.StatusCode, 200)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedRequestBody, actualBody)
 }

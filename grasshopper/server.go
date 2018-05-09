@@ -2,6 +2,7 @@ package grasshopper
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -13,7 +14,7 @@ type PublishResponse struct {
 
 type Server struct {
 	serv              *http.Server
-	geckoboardService *DefGeckoboardService
+	geckoboardService GeckoboardService
 }
 
 func (me *Server) Start(address string) *httprouter.Router {
@@ -42,18 +43,34 @@ func (me *Server) Stop() error {
 }
 
 func (me *Server) handleAppStatusPost(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	res := AppStatus{}
 
-	me.geckoboardService.PublishStatus(AppStatus{
-		AppName:  "dummy",
-		CommitID: "asdasdasdasdas",
-		Date:     "2018-03-01",
-		Stage:    "Production",
-	})
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	err := decoder.Decode(&res)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	resp, err := me.geckoboardService.PublishStatus(res)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		if resp != nil {
+			http.Error(w, "Failed to invoke geckoboard", resp.StatusCode)
+
+		} else {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+		return
+	}
+
 }
 
-func NewServer(geckoboardService DefGeckoboardService) *Server {
+func NewServer(geckoboardService GeckoboardService) *Server {
 	s := Server{
-		geckoboardService: &geckoboardService,
+		geckoboardService: geckoboardService,
 	}
 	return &s
 }

@@ -1,43 +1,32 @@
 package grasshopper_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/vwdilab/flashlight-grasshopper/grasshopper"
+	"github.com/vwdilab/flashlight-grasshopper/grasshopper/mocks"
 )
 
-var interactionsWithGrasshopper = 0
+var subject *grasshopper.Server
+var geckoboardService *mock_grasshopper.MockGeckoboardService
+
+type MockedAppStatus struct {
+	CommitID string `json:"CommitId"`
+	Date     string `json:"Datum"`
+	Stage    string `json:"Stage"`
+	Status   string `json:"Status"`
+}
 
 type PublishResponse struct {
 	Status string `json:"status"`
-}
-
-func startGrasshopperServerMocked() *httptest.Server {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.Contains(r.URL.Path, "data") {
-			panic("Endpoint url not mocked: " + r.URL.Path)
-		}
-		res := PublishResponse{
-			Status: "ok",
-		}
-		bytes, err := json.Marshal(res)
-		if err != nil {
-			panic("Could not marshal response message")
-		}
-		interactionsWithGrasshopper++
-		w.Write(bytes)
-	}))
-
-	os.Setenv("VARIABLE", srv.URL)
-	return srv
 }
 
 // func init() {
@@ -47,18 +36,18 @@ func startGrasshopperServerMocked() *httptest.Server {
 
 func testStartserver(t *testing.T) func() {
 	// init mocks
-	geckoboardService := grasshopper.NewGeckoboardService()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	geckoboardService = mock_grasshopper.NewMockGeckoboardService(ctrl)
 
 	// create subject
-	s := grasshopper.NewServer(*geckoboardService)
-	geckoboardMockServer := startGrasshopperServerMocked()
+	subject = grasshopper.NewServer(geckoboardService)
 
-	s.Start(":2345")
+	subject.Start(":2345")
 	testWaitForServer()
 
 	return func() {
-		s.Stop()
-		geckoboardMockServer.Close()
+		subject.Stop()
 		testWaitForServer()
 	}
 }
@@ -70,18 +59,47 @@ func testWaitForServer() {
 	time.Sleep(time.Millisecond * 200)
 }
 
-func Test_Something(t *testing.T) {
+func Test_publishStatus_whenReceivingPostRequest(t *testing.T) {
 	// given
-	interactionsWithGrasshopper = 0
 	defer testStartserver(t)()
 
+	appStatus := grasshopper.AppStatus{
+		AppName:  "dummy",
+		CommitID: "asdasda",
+		Date:     "2018-03-01",
+		Stage:    "Production",
+		Status:   "down",
+	}
+
+	requestBody, _ := json.Marshal(appStatus)
+	geckoboardService.EXPECT().PublishStatus(appStatus).Return(nil).Times(1)
+
 	// when
-	req, _ := http.NewRequest("POST", "http://0.0.0.0:2345/publish", nil)
+	req, _ := http.NewRequest("POST", "http://0.0.0.0:2345/publish", bytes.NewBuffer([]byte(requestBody)))
 	resp, err := http.DefaultClient.Do(req)
 
 	// then
 	assert.NoError(t, err)
 	assert.Equal(t, resp.StatusCode, 200)
-	assert.Equal(t, interactionsWithGrasshopper, 1)
+}
+func Test_return400_whenFieldIsIncorrect(t *testing.T) {
+	// given
+	defer testStartserver(t)()
 
+	incorrectAppStatusBody := MockedAppStatus{
+		CommitID: "asdasda",
+		Date:     "2018-03-01",
+		Stage:    "Production",
+		Status:   "down",
+	}
+
+	requestBody, _ := json.Marshal(incorrectAppStatusBody)
+
+	// when
+	req, _ := http.NewRequest("POST", "http://0.0.0.0:2345/publish", bytes.NewBuffer([]byte(requestBody)))
+	resp, err := http.DefaultClient.Do(req)
+
+	// then
+	assert.NoError(t, err)
+	assert.Equal(t, resp.StatusCode, 400)
 }

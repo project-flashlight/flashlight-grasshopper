@@ -23,7 +23,7 @@ func init() {
 func main() {
 	geckoBoardService := grasshopper.NewGeckoboardService()
 
-	server := grasshopper.NewServer(*geckoBoardService)
+	server := grasshopper.NewServer(geckoBoardService)
 
 	p, ok := loadPort()
 	if !ok {

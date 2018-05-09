@@ -8,15 +8,15 @@ import (
 )
 
 type GeckoboardService interface {
-	PublishStatus(appStatus AppStatus) error
+	PublishStatus(appStatus AppStatus) (*http.Response, error)
 }
 
 type AppStatus struct {
-	AppName  string `json:"app_name"`
-	CommitID string `json:"commit_id"`
-	Date     string `json:"date"`
-	Stage    string `json:"stage"`
-	Status   string `json:"status"`
+	AppName  string `json:"AppName"`
+	CommitID string `json:"CommitId"`
+	Date     string `json:"Date"`
+	Stage    string `json:"Stage"`
+	Status   string `json:"Status"`
 }
 
 type DataSet struct {
@@ -29,7 +29,7 @@ func NewGeckoboardService() *DefGeckoboardService {
 	return &DefGeckoboardService{}
 }
 
-func (me *DefGeckoboardService) PublishStatus(appStatus AppStatus) error {
+func (me *DefGeckoboardService) PublishStatus(appStatus AppStatus) (*http.Response, error) {
 	url := os.Getenv("VARIABLE")
 	// add variable https://api.geckoboard.com/datasets/flashlight.services
 	endpoint := url + "/data"
@@ -37,12 +37,11 @@ func (me *DefGeckoboardService) PublishStatus(appStatus AppStatus) error {
 	data := DataSet{[]AppStatus{appStatus}}
 	b, _ := json.Marshal(data)
 	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBuffer(b))
+	req.Header.Add("Authorization", "API_KEY_BASE64")
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, errDo := http.DefaultClient.Do(req)
-
-	return errDo
+	return http.DefaultClient.Do(req)
 }
