@@ -3,6 +3,8 @@ package grasshopper
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -58,10 +60,18 @@ func (me *Server) handleAppStatusPost(w http.ResponseWriter, r *http.Request, p 
 	resp, err := me.geckoboardService.PublishStatus(res)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		if resp != nil {
-			http.Error(w, "Failed to invoke geckoboard", resp.StatusCode)
+			bodyBytes, err := ioutil.ReadAll(resp.Body)
 
+			if err != nil {
+				panic("There was an error parsing the response error body")
+			}
+
+			bodyString := string(bodyBytes)
+
+			responseMsg := fmt.Sprintf("Failed to invoke geckoboard: %v", bodyString)
+			http.Error(w, responseMsg, resp.StatusCode)
 		} else {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		return
 	}

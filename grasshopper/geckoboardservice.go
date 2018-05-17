@@ -12,11 +12,11 @@ type GeckoboardService interface {
 }
 
 type AppStatus struct {
-	AppName  string `json:"AppName"`
-	CommitID string `json:"CommitId"`
-	Date     string `json:"Date"`
-	Stage    string `json:"Stage"`
-	Status   string `json:"Status"`
+	AppName  string `json:"app_name"`
+	CommitID string `json:"commit_id"`
+	Date     string `json:"date"`
+	Stage    string `json:"stage"`
+	Status   string `json:"status"`
 }
 
 type DataSet struct {
@@ -35,10 +35,10 @@ func (me *DefGeckoboardService) PublishStatus(appStatus AppStatus) (*http.Respon
 	endpoint := url + "/data"
 
 	data := DataSet{[]AppStatus{appStatus}}
-	b, _ := json.Marshal(data)
-	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBuffer(b))
-	req.Header.Add("Authorization", "API_KEY_BASE64")
+	body, _ := json.Marshal(data)
 
+	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBuffer(body))
+	req.Header.Add("Authorization", "API_KEY_BASE64")
 	if err != nil {
 		return nil, err
 	}

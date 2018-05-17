@@ -1,7 +1,6 @@
 package grasshopper_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -50,15 +49,14 @@ func Test_shouldSendDataSetToGeckoBoard(t *testing.T) {
 	geckoboardService := grasshopper.NewGeckoboardService()
 	appStatus := grasshopper.AppStatus{
 		AppName:  "dummy",
-		CommitID: "asdasdasdasdas",
-		Date:     "2018-03-01",
+		CommitID: "asdasda",
+		Date:     "2018-05-03T12:00:00Z",
 		Stage:    "Production",
 		Status:   "up",
 	}
 
-	dataSet := grasshopper.DataSet{[]grasshopper.AppStatus{appStatus}}
-	b, _ := json.Marshal(dataSet)
-	expectedRequestBody := string(b)
+	// make sure to use this string to catch json marshalling issues
+	expectedRequestBody := `{"data":[{"app_name":"dummy","commit_id":"asdasda","date":"2018-05-03T12:00:00Z","stage":"Production","status":"up"}]}`
 
 	// when
 	resp, err := geckoboardService.PublishStatus(appStatus)
