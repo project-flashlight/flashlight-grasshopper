@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
+	"github.com/vwdilab/mango/assert"
 
 	"github.com/vwdilab/flashlight-grasshopper/grasshopper"
 	"github.com/vwdilab/flashlight-grasshopper/grasshopper/mocks"

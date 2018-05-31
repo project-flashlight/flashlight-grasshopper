@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/vwdilab/flashlight-grasshopper/grasshopper"
+	"github.com/vwdilab/mango/assert"
 )
 
 func startCloudFoundryMocked(body string) *httptest.Server {
