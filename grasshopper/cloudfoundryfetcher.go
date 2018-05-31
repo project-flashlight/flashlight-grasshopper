@@ -9,31 +9,28 @@ import (
 
 type CloudFoundryFetcher interface {
 	GetApps() (*CloudFoundryApps, error)
+	GetAppByRoute(app CloudFoundryEntities) (*CloudFoundryAppRoute, error)
 }
 
 type DefCloudFoundryFetcher struct{}
 
 type CloudFoundryApps struct {
-	App     []CloudFoundryApp `json:"resources"`
-	Results int               `json:"total_results"`
-}
-type CloudFoundryApp struct {
-	Entity CloudFoundryEntity `json:"entity"`
-}
-type CloudFoundryEntity struct {
-	RoutesUrl string `json:"routes_url"`
+	App     []CloudFoundryEntities `json:"resources"`
+	Results int                    `json:"total_results"`
 }
 
 type CloudFoundryAppRoute struct {
-	Resources []CloudFoundryAppRouteResource `json:"resources"`
+	Resources []CloudFoundryEntities `json:"resources"`
 }
 
-type CloudFoundryAppRouteResource struct {
-	Entity CloudFoundryAppRouteEntity `json:"entity"`
+type CloudFoundryEntities struct {
+	Entity CloudFoundryEntity `json:"entity"`
 }
 
-type CloudFoundryAppRouteEntity struct {
-	DomainUrl string `json:"domain_url"`
+// CloudFoundryEntity is a multipurpose container, used to parse the cf response
+type CloudFoundryEntity struct {
+	RoutesURL string `json:"routes_url"`
+	DomainURL string `json:"domain_url"`
 	Host      string `json:"host"`
 }
 
@@ -53,8 +50,8 @@ func (me *DefCloudFoundryFetcher) GetApps() (*CloudFoundryApps, error) {
 }
 
 // GetAppByRoute does something
-func (me *DefCloudFoundryFetcher) GetAppByRoute(app CloudFoundryApp) (*CloudFoundryAppRoute, error) {
-	route := app.Entity.RoutesUrl
+func (me *DefCloudFoundryFetcher) GetAppByRoute(app CloudFoundryEntities) (*CloudFoundryAppRoute, error) {
+	route := app.Entity.RoutesURL
 
 	cloudFoundryAppRoute := CloudFoundryAppRoute{}
 	err := getRequest(route, &cloudFoundryAppRoute)
@@ -67,6 +64,7 @@ func (me *DefCloudFoundryFetcher) GetAppByRoute(app CloudFoundryApp) (*CloudFoun
 }
 
 func getRequest(path string, structPointer interface{}) error {
+	// baseUrl is https://api.sys.emea.vwapps.io
 	baseURL := os.Getenv("SERVER_URL")
 	req, _ := http.NewRequest(http.MethodGet, baseURL+path, nil)
 
