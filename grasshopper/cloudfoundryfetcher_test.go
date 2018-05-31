@@ -11,9 +11,9 @@ import (
 	"github.com/vwdilab/mango/assert"
 )
 
-func startCloudFoundryMocked(body string) *httptest.Server {
+func startCloudFoundryMocked(body string, expectedPath string) *httptest.Server {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.Contains(r.URL.Path, "/v2/apps") {
+		if !strings.Contains(r.URL.Path, expectedPath) {
 			panic("Endpoint url not mocked")
 		}
 		returnBody := body
@@ -44,7 +44,7 @@ func Test_shouldGetListOfApps(t *testing.T) {
 			}
 		  }
 		]
-	  }`)
+	  }`, "/v2/apps")
 	os.Setenv("SERVER_URL", server.URL)
 	defer server.Close()
 
@@ -66,7 +66,7 @@ func Test_shouldReturnErroWhenMalformedJson(t *testing.T) {
 	// Given
 	subject := grasshopper.NewCloudFoundryFetcher()
 
-	server := startCloudFoundryMocked(`invalid json`)
+	server := startCloudFoundryMocked(`invalid json`, "/v2/apps")
 	os.Setenv("SERVER_URL", server.URL)
 	defer server.Close()
 
@@ -76,5 +76,37 @@ func Test_shouldReturnErroWhenMalformedJson(t *testing.T) {
 	// Then
 	assert.Error(t, err)
 	assert.Nil(t, apps)
+}
 
+func Test_shouldGetAppByRoute(t *testing.T) {
+	// Given
+	subject := grasshopper.NewCloudFoundryFetcher()
+	path := "/v2/apps/e97d1675-894e-4808-8b58-82d1805b7368/routes"
+	server := startCloudFoundryMocked(`{
+    "resources": [
+        {
+            "entity": {
+                "host": "dashlight-acceptance",
+                "domain_url": "/v2/shared_domains/e97d1675-894e-4808-8b58-82d1805b7368"
+            }
+        }
+    ]
+}`, path)
+	os.Setenv("SERVER_URL", server.URL)
+	defer server.Close()
+
+	inputApp := grasshopper.CloudFoundryApp{
+		Entity: grasshopper.CloudFoundryEntity{
+			RoutesUrl: path,
+		},
+	}
+
+	// When
+	app, err := subject.GetAppByRoute(inputApp)
+
+	// Then
+	assert.NoError(t, err)
+	assert.NotNil(t, app)
+	assert.Equal(t, app.Resources[0].Entity.DomainUrl, "/v2/shared_domains/e97d1675-894e-4808-8b58-82d1805b7368")
+	assert.Equal(t, app.Resources[0].Entity.Host, "dashlight-acceptance")
 }

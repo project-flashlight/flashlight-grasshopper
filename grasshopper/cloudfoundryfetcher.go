@@ -24,6 +24,19 @@ type CloudFoundryEntity struct {
 	RoutesUrl string `json:"routes_url"`
 }
 
+type CloudFoundryAppRoute struct {
+	Resources []CloudFoundryAppRouteResource `json:"resources"`
+}
+
+type CloudFoundryAppRouteResource struct {
+	Entity CloudFoundryAppRouteEntity `json:"entity"`
+}
+
+type CloudFoundryAppRouteEntity struct {
+	DomainUrl string `json:"domain_url"`
+	Host      string `json:"host"`
+}
+
 func NewCloudFoundryFetcher() *DefCloudFoundryFetcher {
 	return &DefCloudFoundryFetcher{}
 }
@@ -53,4 +66,33 @@ func (me *DefCloudFoundryFetcher) GetApps() (*CloudFoundryApps, error) {
 	resp.Body.Close()
 
 	return &cloudFoundryApps, nil
+}
+
+// GetAppByRoute does something
+func (me *DefCloudFoundryFetcher) GetAppByRoute(app CloudFoundryApp) (*CloudFoundryAppRoute, error) {
+	url := os.Getenv("SERVER_URL")
+	route := app.Entity.RoutesUrl
+
+	req, _ := http.NewRequest(http.MethodGet, url+route, nil)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	cloudFoundryAppRoute := CloudFoundryAppRoute{}
+
+	unmarshalError := json.Unmarshal(body, &cloudFoundryAppRoute)
+	if unmarshalError != nil {
+		return nil, unmarshalError
+	}
+	resp.Body.Close()
+
+	return &cloudFoundryAppRoute, nil
 }
