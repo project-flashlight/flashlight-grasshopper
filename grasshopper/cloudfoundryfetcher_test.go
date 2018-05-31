@@ -17,12 +17,24 @@ func startCloudFoundryMocked(body string, expectedPath string) *httptest.Server 
 			panic("Endpoint url not mocked")
 		}
 		returnBody := body
-		// body := `{
-		// 	"resources": [{"entity":{"routes_url":"/v2/apps/5d1a6bf3-82e0-4c38-abf6-f944c14e03b9/routes"}},{"entity":{"routes_url": "/v2/apps/7d1a6bf3-82e0-4c38-abf6-f944c14e03b9/routes"}}]}`
 		w.Write([]byte(returnBody))
 	}))
 
-	os.Setenv("VARIABLE", srv.URL)
+	os.Setenv("SERVER_URL", srv.URL)
+
+	return srv
+}
+
+func startCloudFoundryMockedBufferError(expectedPath string) *httptest.Server {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.URL.Path, expectedPath) {
+			panic("Endpoint url not mocked")
+		}
+		w.Write([]byte(nil))
+	}))
+
+	os.Setenv("SERVER_URL", srv.URL)
+
 	return srv
 }
 
@@ -45,7 +57,6 @@ func Test_shouldGetListOfApps(t *testing.T) {
 		  }
 		]
 	  }`, "/v2/apps")
-	os.Setenv("SERVER_URL", server.URL)
 	defer server.Close()
 
 	// When
@@ -62,12 +73,11 @@ func Test_shouldGetListOfApps(t *testing.T) {
 
 }
 
-func Test_shouldReturnErroWhenMalformedJson(t *testing.T) {
+func Test_shouldReturnErroWhenMalformedJsonOnAppsFetching(t *testing.T) {
 	// Given
 	subject := grasshopper.NewCloudFoundryFetcher()
 
 	server := startCloudFoundryMocked(`invalid json`, "/v2/apps")
-	os.Setenv("SERVER_URL", server.URL)
 	defer server.Close()
 
 	// When
@@ -92,7 +102,6 @@ func Test_shouldGetAppByRoute(t *testing.T) {
         }
     ]
 }`, path)
-	os.Setenv("SERVER_URL", server.URL)
 	defer server.Close()
 
 	inputApp := grasshopper.CloudFoundryApp{
@@ -109,4 +118,34 @@ func Test_shouldGetAppByRoute(t *testing.T) {
 	assert.NotNil(t, app)
 	assert.Equal(t, app.Resources[0].Entity.DomainUrl, "/v2/shared_domains/e97d1675-894e-4808-8b58-82d1805b7368")
 	assert.Equal(t, app.Resources[0].Entity.Host, "dashlight-acceptance")
+}
+
+func Test_shouldReturnErroWhenMalformedJsonOnRouteFetching(t *testing.T) {
+	// Given
+	subject := grasshopper.NewCloudFoundryFetcher()
+
+	server := startCloudFoundryMocked(`invalid json`, "/v2")
+	defer server.Close()
+
+	// When
+	apps, err := subject.GetAppByRoute(grasshopper.CloudFoundryApp{})
+
+	// Then
+	assert.Error(t, err)
+	assert.Nil(t, apps)
+}
+
+func Test_shouldReturnErroWhenBufferWronglyFormatted(t *testing.T) {
+	// Given
+	subject := grasshopper.NewCloudFoundryFetcher()
+
+	server := startCloudFoundryMockedBufferError("/v2")
+	defer server.Close()
+
+	// When
+	apps, err := subject.GetAppByRoute(grasshopper.CloudFoundryApp{})
+
+	// Then
+	assert.Error(t, err)
+	assert.Nil(t, apps)
 }
