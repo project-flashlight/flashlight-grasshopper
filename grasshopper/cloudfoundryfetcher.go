@@ -10,6 +10,14 @@ import (
 type CloudFoundryFetcher interface {
 	GetApps() (*CloudFoundryApps, error)
 	GetAppByRoute(app CloudFoundryEntities) (*CloudFoundryAppRoute, error)
+	GetDomainName(path string) (string, error)
+	FetchCloudFoundryApps() ([]CloudFoundryApp, error)
+}
+
+type CloudFoundryApp struct {
+	AppName string
+	AppUrl  string
+	Stage   string
 }
 
 type DefCloudFoundryFetcher struct{}
@@ -23,6 +31,10 @@ type CloudFoundryAppRoute struct {
 	Resources []CloudFoundryEntities `json:"resources"`
 }
 
+type CloudFoundryDomain struct {
+	Entity CloudFoundryEntity `json:"entity"`
+}
+
 type CloudFoundryEntities struct {
 	Entity CloudFoundryEntity `json:"entity"`
 }
@@ -32,6 +44,7 @@ type CloudFoundryEntity struct {
 	RoutesURL string `json:"routes_url"`
 	DomainURL string `json:"domain_url"`
 	Host      string `json:"host"`
+	Name      string `json:"name"`
 }
 
 func NewCloudFoundryFetcher() *DefCloudFoundryFetcher {
@@ -49,6 +62,23 @@ func (me *DefCloudFoundryFetcher) GetApps() (*CloudFoundryApps, error) {
 	return &cloudFoundryApps, nil
 }
 
+func (me *DefCloudFoundryFetcher) FetchCloudFoundryApps() ([]CloudFoundryApp, error) {
+
+	t := []CloudFoundryApp{
+		CloudFoundryApp{
+			AppName: "App1",
+			AppUrl:  "asad",
+			Stage:   "",
+		},
+		CloudFoundryApp{
+			AppName: "App2",
+			AppUrl:  "asad",
+			Stage:   "",
+		},
+	}
+	return t, nil
+}
+
 // GetAppByRoute does something
 func (me *DefCloudFoundryFetcher) GetAppByRoute(app CloudFoundryEntities) (*CloudFoundryAppRoute, error) {
 	route := app.Entity.RoutesURL
@@ -61,6 +91,19 @@ func (me *DefCloudFoundryFetcher) GetAppByRoute(app CloudFoundryEntities) (*Clou
 	}
 
 	return &cloudFoundryAppRoute, nil
+}
+
+// GetDomainName does something
+func (me *DefCloudFoundryFetcher) GetDomainName(path string) (string, error) {
+
+	cloudFoundryDomain := CloudFoundryDomain{}
+	err := getRequest(path, &cloudFoundryDomain)
+
+	if err != nil {
+		return "", err
+	}
+
+	return cloudFoundryDomain.Entity.Name, nil
 }
 
 func getRequest(path string, structPointer interface{}) error {

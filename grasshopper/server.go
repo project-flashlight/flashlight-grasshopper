@@ -48,6 +48,7 @@ func (me *Server) handleAppStatusPost(w http.ResponseWriter, r *http.Request, p 
 	res := AppStatus{}
 
 	decoder := json.NewDecoder(r.Body)
+	// TODO: check why this is not supported anymore
 	decoder.DisallowUnknownFields()
 
 	err := decoder.Decode(&res)
@@ -75,7 +76,6 @@ func (me *Server) handleAppStatusPost(w http.ResponseWriter, r *http.Request, p 
 		}
 		return
 	}
-
 }
 
 func NewServer(geckoboardService GeckoboardService) *Server {
