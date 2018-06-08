@@ -20,7 +20,9 @@ type CloudFoundryApp struct {
 	Stage   string
 }
 
-type DefCloudFoundryFetcher struct{}
+type DefCloudFoundryFetcher struct {
+	BaseUrl string
+}
 
 type CloudFoundryApps struct {
 	App     []CloudFoundryEntities `json:"resources"`
@@ -41,14 +43,16 @@ type CloudFoundryEntities struct {
 
 // CloudFoundryEntity is a multipurpose container, used to parse the cf response
 type CloudFoundryEntity struct {
-	RoutesURL string `json:"routes_url"`
-	DomainURL string `json:"domain_url"`
-	Host      string `json:"host"`
-	Name      string `json:"name"`
+	RoutesURL   string            `json:"routes_url"`
+	DomainURL   string            `json:"domain_url"`
+	Host        string            `json:"host"`
+	Name        string            `json:"name"`
+	Environment map[string]string `json:"environment_json"`
 }
 
 func NewCloudFoundryFetcher() *DefCloudFoundryFetcher {
-	return &DefCloudFoundryFetcher{}
+	baseURL := os.Getenv("SERVER_URL")
+	return &DefCloudFoundryFetcher{BaseUrl: baseURL}
 }
 
 func (me *DefCloudFoundryFetcher) GetApps() (*CloudFoundryApps, error) {
@@ -84,7 +88,7 @@ func (me *DefCloudFoundryFetcher) GetAppByRoute(app CloudFoundryEntities) (*Clou
 	route := app.Entity.RoutesURL
 
 	cloudFoundryAppRoute := CloudFoundryAppRoute{}
-	err := getRequest(route, &cloudFoundryAppRoute)
+	err := getRequest(me.BaseUrl+route, &cloudFoundryAppRoute)
 
 	if err != nil {
 		return nil, err
@@ -97,7 +101,7 @@ func (me *DefCloudFoundryFetcher) GetAppByRoute(app CloudFoundryEntities) (*Clou
 func (me *DefCloudFoundryFetcher) GetDomainName(path string) (string, error) {
 
 	cloudFoundryDomain := CloudFoundryDomain{}
-	err := getRequest(path, &cloudFoundryDomain)
+	err := getRequest(me.BaseUrl+path, &cloudFoundryDomain)
 
 	if err != nil {
 		return "", err
@@ -106,10 +110,11 @@ func (me *DefCloudFoundryFetcher) GetDomainName(path string) (string, error) {
 	return cloudFoundryDomain.Entity.Name, nil
 }
 
-func getRequest(path string, structPointer interface{}) error {
+func getRequest(url string, structPointer interface{}) error {
 	// baseUrl is https://api.sys.emea.vwapps.io
-	baseURL := os.Getenv("SERVER_URL")
-	req, _ := http.NewRequest(http.MethodGet, baseURL+path, nil)
+
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
+	req.Header["Authorization"] = []string{"bearer blabla"}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

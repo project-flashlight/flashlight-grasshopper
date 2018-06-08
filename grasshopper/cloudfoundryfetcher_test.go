@@ -16,6 +16,11 @@ func startCloudFoundryMocked(body string, expectedPath string, mockedRequests *M
 		if !strings.Contains(r.URL.Path, expectedPath) {
 			panic("Endpoint url not mocked")
 		}
+
+		if !strings.Contains(r.Header["Authorization"][0], "bearer blabla") {
+			panic("Authorization missing")
+		}
+
 		mockedRequests.counter++
 		returnBody := body
 		w.Write([]byte(returnBody))
@@ -28,24 +33,31 @@ func startCloudFoundryMocked(body string, expectedPath string, mockedRequests *M
 
 func Test_shouldGetListOfApps(t *testing.T) {
 	// Given
-	subject := grasshopper.NewCloudFoundryFetcher()
-
 	server := startCloudFoundryMocked(`{ 
 		"total_results": 2,
 		"resources": [
-		  {
-			"entity": {
-			  "routes_url": "/v2/apps/5d1a6bf3-82e0-4c38-abf6-f944c14e03b9/routes"
+			{
+				"entity": {
+					"routes_url": "/v2/apps/5d1a6bf3-82e0-4c38-abf6-f944c14e03b9/routes",
+					"environment_json": {
+						"ENV1": "BLA",
+						"ENV2": "WULULU"
+					}
+				}
+			},
+			{
+				"entity": {
+					"routes_url": "/v2/apps/7d1a6bf3-82e0-4c38-abf6-f944c14e03b9/routes",
+					"environment_json": {
+						"ENV3": "BLABla"
+					}
+				}
 			}
-		  },
-		  {
-			"entity": {
-			  "routes_url": "/v2/apps/7d1a6bf3-82e0-4c38-abf6-f944c14e03b9/routes"
-			}
-		  }
-		]
-	  }`, "/v2/apps", &MockedRequests{})
+			]
+			}`, "/v2/apps", &MockedRequests{})
 	defer server.Close()
+
+	subject := grasshopper.NewCloudFoundryFetcher()
 
 	// When
 	apps, err := subject.GetApps()
@@ -57,16 +69,18 @@ func Test_shouldGetListOfApps(t *testing.T) {
 	assert.Equal(t, 2, len(apps.App))
 	assert.Equal(t, 2, apps.Results)
 	assert.Equal(t, apps.App[0].Entity.RoutesURL, "/v2/apps/5d1a6bf3-82e0-4c38-abf6-f944c14e03b9/routes")
+	assert.Equal(t, apps.App[0].Entity.Environment["ENV1"], "BLA")
+	assert.Equal(t, apps.App[0].Entity.Environment["ENV2"], "WULULU")
 	assert.Equal(t, apps.App[1].Entity.RoutesURL, "/v2/apps/7d1a6bf3-82e0-4c38-abf6-f944c14e03b9/routes")
-
+	assert.Equal(t, apps.App[1].Entity.Environment["ENV3"], "BLABla")
 }
 
 func Test_shouldReturnErroWhenMalformedJsonOnAppsFetching(t *testing.T) {
 	// Given
-	subject := grasshopper.NewCloudFoundryFetcher()
-
 	server := startCloudFoundryMocked(`invalid json`, "/v2/apps", &MockedRequests{})
 	defer server.Close()
+
+	subject := grasshopper.NewCloudFoundryFetcher()
 
 	// When
 	apps, err := subject.GetApps()
@@ -78,19 +92,19 @@ func Test_shouldReturnErroWhenMalformedJsonOnAppsFetching(t *testing.T) {
 
 func Test_shouldGetAppByRoute(t *testing.T) {
 	// Given
-	subject := grasshopper.NewCloudFoundryFetcher()
 	path := "/v2/apps/e97d1675-894e-4808-8b58-82d1805b7368/routes"
 	server := startCloudFoundryMocked(`{
-    "resources": [
-        {
-            "entity": {
-                "host": "dashlight-acceptance",
-                "domain_url": "/v2/shared_domains/e97d1675-894e-4808-8b58-82d1805b7368"
-            }
-        }
-    ]
-}`, path, &MockedRequests{})
+		"resources": [
+			{
+				"entity": {
+					"host": "dashlight-acceptance",
+					"domain_url": "/v2/shared_domains/e97d1675-894e-4808-8b58-82d1805b7368"
+				}
+			}
+			]
+			}`, path, &MockedRequests{})
 	defer server.Close()
+	subject := grasshopper.NewCloudFoundryFetcher()
 
 	inputApp := grasshopper.CloudFoundryEntities{
 		Entity: grasshopper.CloudFoundryEntity{
@@ -110,10 +124,10 @@ func Test_shouldGetAppByRoute(t *testing.T) {
 
 func Test_shouldReturnErroWhenMalformedJsonOnRouteFetching(t *testing.T) {
 	// Given
-	subject := grasshopper.NewCloudFoundryFetcher()
-
 	server := startCloudFoundryMocked(`invalid json`, "/v2", &MockedRequests{})
 	defer server.Close()
+
+	subject := grasshopper.NewCloudFoundryFetcher()
 
 	// When
 	apps, err := subject.GetAppByRoute(grasshopper.CloudFoundryEntities{})
@@ -125,7 +139,6 @@ func Test_shouldReturnErroWhenMalformedJsonOnRouteFetching(t *testing.T) {
 
 func Test_shouldGetNameByDomain(t *testing.T) {
 	// Given
-	subject := grasshopper.NewCloudFoundryFetcher()
 
 	mockedRequests := MockedRequests{}
 
@@ -134,8 +147,10 @@ func Test_shouldGetNameByDomain(t *testing.T) {
 		"entity": {
 			"name": "apps.emea.vwapps.io"
 		}
-	}`, path, &mockedRequests)
+		}`, path, &mockedRequests)
 	defer server.Close()
+
+	subject := grasshopper.NewCloudFoundryFetcher()
 
 	// When
 	domainName, err := subject.GetDomainName(path)
@@ -148,13 +163,14 @@ func Test_shouldGetNameByDomain(t *testing.T) {
 
 func Test_shouldReturnErrorWhenMalformedJsonOnDomainNameRouteFetching(t *testing.T) {
 	// Given
-	subject := grasshopper.NewCloudFoundryFetcher()
 
 	mockedRequests := MockedRequests{}
 
 	path := "/this/is/a/test/url"
 	server := startCloudFoundryMocked(`invalid json`, path, &mockedRequests)
 	defer server.Close()
+
+	subject := grasshopper.NewCloudFoundryFetcher()
 
 	// When
 	domainName, err := subject.GetDomainName(path)
@@ -170,13 +186,14 @@ type MockedRequests struct {
 
 func Test_shouldGetAppsWithEndpoint(t *testing.T) {
 	// Given
-	subject := grasshopper.NewCloudFoundryFetcher()
 
 	mockedRequests := MockedRequests{}
 
 	path := "/this/is/a/test/url"
 	server := startCloudFoundryMocked(`invalid json`, path, &mockedRequests)
 	defer server.Close()
+
+	subject := grasshopper.NewCloudFoundryFetcher()
 
 	// When
 	apps, err := subject.FetchCloudFoundryApps()
