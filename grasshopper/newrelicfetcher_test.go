@@ -11,11 +11,16 @@ import (
 	"github.com/vwdilab/mango/assert"
 )
 
-func startNewRelicMocked(body string, expectedPath string) *httptest.Server {
+func startNewRelicMocked(body string, expectedPath string, expectedApiKey string) *httptest.Server {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.URL.Path, expectedPath) {
 			panic("Endpoint url not mocked")
 		}
+
+		if !strings.Contains(r.Header["X-Api-Key"][0], expectedApiKey) {
+			panic("API Key missing")
+		}
+
 		returnBody := body
 		w.Write([]byte(returnBody))
 	}))
@@ -27,6 +32,7 @@ func startNewRelicMocked(body string, expectedPath string) *httptest.Server {
 
 func Test_shouldGetListOfNewRelicApps(t *testing.T) {
 	// Given
+	apiKey := "someKey"
 	body := `{
 		"applications": [
 			{
@@ -39,10 +45,11 @@ func Test_shouldGetListOfNewRelicApps(t *testing.T) {
 			}
 		]
 	}`
-	mockedServer := startNewRelicMocked(body, "v2/applications.json")
+	mockedServer := startNewRelicMocked(body, "v2/applications.json", apiKey)
 	defer mockedServer.Close()
+
 	baseURL := os.Getenv("NEWRELIC_URL")
-	subject := grasshopper.NewNewRelicFetcher(baseURL)
+	subject := grasshopper.NewNewRelicFetcher(baseURL, apiKey)
 
 	// When
 	apps, err := subject.GetApps()

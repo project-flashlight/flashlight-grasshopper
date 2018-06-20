@@ -17,13 +17,13 @@
   branch = "master"
   name = "github.com/vwdilab/mango"
   packages = ["assert"]
-  revision = "23c5c1d83813f87e00bf5e74d858c153fe4443ed"
+  revision = "486f2ed6c3ba41add334114a77288dfbde58d979"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context"]
-  revision = "1e491301e022f8f977054da4c2d852decd59571f"
+  revision = "db08ff08e8622530d9ed3a0e8ac279f6d4c02196"
 
 [solve-meta]
   analyzer-name = "dep"

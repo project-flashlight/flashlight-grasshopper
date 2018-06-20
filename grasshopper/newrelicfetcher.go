@@ -21,11 +21,15 @@ type NewRelicApp struct {
 }
 
 type defaultNewRelicFetcher struct {
+	ApiKey  string
 	BaseUrl string
 }
 
-func NewNewRelicFetcher(baseURL string) NewRelicFetcher {
-	return &defaultNewRelicFetcher{BaseUrl: baseURL}
+func NewNewRelicFetcher(baseURL string, apiKey string) NewRelicFetcher {
+	return &defaultNewRelicFetcher{
+		BaseUrl: baseURL,
+		ApiKey:  apiKey,
+	}
 }
 
 func (me *defaultNewRelicFetcher) GetApps() (*NewRelicApps, error) {
@@ -33,6 +37,7 @@ func (me *defaultNewRelicFetcher) GetApps() (*NewRelicApps, error) {
 	newRelicApps := NewRelicApps{}
 
 	req, _ := http.NewRequest(http.MethodGet, me.BaseUrl+path, nil)
+	req.Header["X-Api-Key"] = []string{me.ApiKey}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
