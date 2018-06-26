@@ -11,7 +11,7 @@ import (
 	"github.com/vwdilab/mango/assert"
 )
 
-func startNewRelicMocked(body string, expectedPath string, expectedApiKey string) *httptest.Server {
+func StartNewRelicMocked(body string, expectedPath string, expectedApiKey string) *httptest.Server {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.URL.Path, expectedPath) {
 			panic("Endpoint url not mocked")
@@ -45,7 +45,7 @@ func Test_shouldGetListOfNewRelicApps(t *testing.T) {
 			}
 		]
 	}`
-	mockedServer := startNewRelicMocked(body, "v2/applications.json", apiKey)
+	mockedServer := StartNewRelicMocked(body, "v2/applications.json", apiKey)
 	defer mockedServer.Close()
 
 	baseURL := os.Getenv("NEWRELIC_URL")

@@ -31,6 +31,9 @@ func main() {
 	apps, err := cloudFoundryFetcher.GetApps()
 	if err != nil {
 		panic(fmt.Sprintf("Error fetching Apps %s\n", err.Error()))
+	} else if apps.Results == 0 {
+		panic(fmt.Sprintf("Error fetching Apps, probably authorization token is not valid\n"))
+
 	}
 
 	for _, entity := range apps.App {

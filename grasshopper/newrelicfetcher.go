@@ -16,8 +16,9 @@ type NewRelicApps struct {
 }
 
 type NewRelicApp struct {
-	Id   int    `json:"id"`
-	Name string `json:"name"`
+	Id       int    `json:"id"`
+	Name     string `json:"name"`
+	Revision string `json:"revision"`
 }
 
 type defaultNewRelicFetcher struct {
